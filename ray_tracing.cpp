@@ -21,7 +21,8 @@ int main()
 
     float distortion = (8.0 / 16) * (width / height);
 
-    Sphere sphere = {0.5, {0, 0, 0}};
+    Box box = {-0.3, 0.3}; // cube
+    // Box box = {{-0.3}, {0.5, 0.3, 0.3}}; // parallelepiped
 
     vector2 xy = 0;
 
@@ -30,7 +31,7 @@ int main()
     vector3 camera = 0;
     vector3 ray = 0;
 
-    unsigned int angle = 0;
+    int angle = 0;
 
     while (true)
     {
@@ -44,29 +45,28 @@ int main()
             
                 xy = xy / 2.0f; // FOV
 
-                ray = vector3(xy.x, xy.y, 1).normalize();
-                ray = rotate_y(ray, angle * 0.05); 
-                
+                ray = vector3(xy.x, xy.y, 1).normalize();                
+                ray = rotate_y(ray, angle * 0.05);
+                ray = rotate_z(ray, 13 * 180 / 3.14 ); 
+                ray = rotate_x(ray, 13 * 180 / 3.14 ); 
+
                 camera = vector3(0, 0, -1.5);
                 camera = rotate_y(camera, angle * 0.05);       
-                
-                // spinning in xz plane light
-                // vector3 point_light = vector3(cos(t * 0.001), 0, sin(t * 0.001)).normalize();
-            
-                // i - intersection
-                vector2 i_distances = sphere.is_intersect(camera, ray).x;
+                camera = rotate_z(camera, 13 * 180 / 3.14 ); 
+                camera = rotate_x(camera, 13 * 180 / 3.14 ); 
 
+                vector3 normal = 0;
+                // i - intersection
+                vector2 i_distances = box.is_intersect(camera, ray, normal);
                 if (i_distances.x > 0)
                 {
                     vector3 i_point = camera + ray * i_distances.x;
-                    vector3 normal = (i_point - sphere.center).normalize();
-                    float cosa = dot_product(normal, point_light);               
+                    float cosa = dot_product(ray, normal);
                     cosa *= 15;
                     cosa = fmin(fmax(0, cosa), g_size);
 
                     mvaddch(j, i, gradient[int(cosa)]);                
-                }
-                else mvaddch(j, i, ' ');
+                } else mvaddch(j, i, ' ');
             }
         }
         ++angle;
