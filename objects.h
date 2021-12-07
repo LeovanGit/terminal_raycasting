@@ -11,7 +11,7 @@ public:
     vector3 A;
     vector3 B;
     
-    void exchange(float & a, float & b)
+    void swap(float & a, float & b)
     {
         float t = a;
         a = b;
@@ -28,17 +28,21 @@ public:
                       (B.y - camera.y) / ray.y,
                       (B.z - camera.z) / ray.z};
 
-        if (t1.x > t2.x) exchange(t1.x, t2.x);
-        if (t1.y > t2.y) exchange(t1.y, t2.y);
-        if (t1.z > t2.z) exchange(t1.z, t2.z);
+        if (t1.x > t2.x) swap(t1.x, t2.x);
+        if (t1.y > t2.y) swap(t1.y, t2.y);
+        if (t1.z > t2.z) swap(t1.z, t2.z);
 
         float t_near = fmax(fmax(t1.x, t1.y), t1.z);
-        float t_far = fmin(fmin(t2.x, t2.y), t2.z);
+        float t_far  = fmin(fmin(t2.x, t2.y), t2.z);
 
-        // bad code :(
-        if (t_near == t1.x) normal = {1, 0, 0};
-        else if (t_near == t1.y) normal = {0, 1, 0};
-        else if (t_near == t1.z) normal = {0, 0, 1};
+        // need another algorithm to calculate normals
+        vector3 i_point = camera + ray * t_near;
+        if      (t_near == t1.x && std::abs(i_point.x - A.x) < 0.1) normal = {-1, 0, 0};
+        else if (t_near == t1.x && std::abs(i_point.x - B.x) < 0.1) normal = {1, 0, 0};
+        else if (t_near == t1.y && std::abs(i_point.y - A.y) < 0.1) normal = {0, 1, 0};
+        else if (t_near == t1.y && std::abs(i_point.y - B.y) < 0.1) normal = {0, -1, 0};
+        else if (t_near == t1.z && std::abs(i_point.z - A.z) < 0.1) normal = {0, 0, 1};
+        else if (t_near == t1.z && std::abs(i_point.z - B.z) < 0.1) normal = {0, 0, -1};
 
         if (t_far < 0 || t_near > t_far) return -1;
         return vector2(t_near, t_far);
