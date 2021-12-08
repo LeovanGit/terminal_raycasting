@@ -66,6 +66,17 @@ public:
     {
         return {x / other.x, y / other.y, z / other.z};
     }
+
+    bool operator<(vector3 const& other)
+    {
+        return (x < other.x && y < other.y && z < other.z);
+    }
+
+    bool operator>(vector3 const& other)
+    {
+        return (x > other.x && y > other.y && z > other.z);
+    }
+
 };
 
 class vector2
