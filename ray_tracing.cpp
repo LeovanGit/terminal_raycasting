@@ -21,18 +21,25 @@ int main()
 
     float distortion = (8.0 / 16) * (width / height);
 
-    Plane v_plane = {{0, 0, -1}, 0}; // vertical
-    Plane g_plane = {{0, -1, 0}, 0}; // horizontal
+    Sphere sphere = {0.4, vector3(-0.6, 0, 0)};
+    Box box = {vector3(0.2, 0.4, 0.4), vector3(1, -0.4, -0.4)};
+    Plane plane = {vector3(0, -1, 0), 1};
 
     vector2 xy = 0;
 
     // static light
-    vector3 point_light = vector3(-0.5, -1, -0.5).normalize();
+    vector3 point_light = vector3(1, -1, 0.5).normalize();
     vector3 camera = 0;
     vector3 ray = 0;
 
-    float cosa = 2; // unreal value
+    float cosa = 2;
     int angle = 0;
+
+    float min_distance = 100000; // render distance
+    vector3 normal = 0;
+
+    float k = 1; // что бы свет на плоскости и на кубе по разному немного был
+    // ато сливается, чисто косметическое
 
     while (true)
     {
@@ -47,38 +54,48 @@ int main()
                 xy = xy / 2.0f; // FOV
 
                 ray = vector3(xy.x, xy.y, 1).normalize();                               
-                ray = rotate_x(ray, -45 * 180 / 3.14);
+                ray = rotate_x(ray, 15 * 180 / 3.14);
                 ray = rotate_y(ray, angle * 0.01);
 
-                camera = vector3(0, 0, -1.5);
-                camera = rotate_x(camera, -45 * 180 / 3.14);
+                camera = vector3(0, 0, -2);
+                camera = rotate_x(camera, 15 * 180 / 3.14);
                 camera = rotate_y(camera, angle * 0.01);
 
-                // i - intersection
-                float i_distance_v = v_plane.is_intersect(camera, ray);
-                float i_distance_g = g_plane.is_intersect(camera, ray);
+                k = 1;
+                min_distance = 100000;
 
-                vector3 i_point_v = camera + ray * i_distance_v;
-                vector3 i_point_g =  camera + ray * i_distance_g;
+                float i_distance = sphere.is_intersect(camera, ray).x;
 
-                if (i_distance_v > 0 && i_distance_v < i_distance_g - 0.001 &&
-                    i_point_v < vector3(v_plane.d) + 0.5 &&
-                    i_point_v > vector3(v_plane.d) - 0.5)
+                if (i_distance > 0)
                 {
-                    cosa = dot_product(point_light, v_plane.normal);
-                }                
-                else if (i_distance_g > 0 &&
-                         i_point_g < vector3(g_plane.d) + 0.5 &&
-                         i_point_g > vector3(g_plane.d) - 0.5)
-                {
-                    cosa = dot_product(point_light, g_plane.normal);
+                    min_distance = i_distance;
+                    normal = (camera + ray * i_distance) - sphere.center;
                 }
                 
-                if (cosa < 2)
+                vector3 box_normal = 0;
+                i_distance = box.is_intersect(camera,ray, box_normal).x;
+
+                if (i_distance > 0 && i_distance < min_distance)
                 {
-                    cosa *= 15;
+                    min_distance = i_distance;
+                    normal = box_normal;
+                }
+
+                i_distance = plane.is_intersect(camera, ray);
+
+                if (i_distance > 0 && i_distance < min_distance)
+                {
+                    min_distance = i_distance;
+                    normal = plane.normal;
+                    k = 0.8;
+                }
+                
+                if (min_distance < 100000)
+                {
+                    cosa = dot_product(point_light, normal.normalize());
+                    cosa *= 15 * k;
                     cosa = fmin(fmax(0, cosa), g_size);
-                    mvaddch(j, i, gradient[int(cosa)]);                
+                    mvaddch(j, i, gradient[int(cosa)]); 
                 } else mvaddch(j, i, ' ');
             }
         }
